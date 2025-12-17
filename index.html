@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>調配你的巧克力 - 歷史配方模擬</title>
+    <style>
+        :root {
+            --bg-color: #b3a085;
+            --container-bg: #c4b5a2;
+            --card-bg: #f9f3e9;
+            --primary-text: #4a3427;
+            --accent-color: #f7a56d;
+            --selected-border: #8b5a2b;
+            --border-dark: #7a6a53;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            font-family: "Microsoft JhengHei", "PingFang TC", sans-serif;
+            color: var(--primary-text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            background-color: var(--container-bg);
+            border: 3px solid var(--border-dark);
+            padding: 30px;
+            max-width: 500px;
+            width: 100%;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+        }
+
+        h1 { text-align: center; font-size: 2.2rem; margin: 0; letter-spacing: 2px; }
+        .subtitle { text-align: center; margin: 5px 0 15px 0; font-size: 0.9rem; opacity: 0.8; }
+        hr { border: 0; border-top: 1.5px solid var(--border-dark); margin-bottom: 25px; }
+
+        .section-header { display: flex; align-items: center; margin-bottom: 15px; }
+        .orange-bar { width: 6px; height: 24px; background-color: var(--accent-color); margin-right: 10px; }
+        .section-title { font-size: 1.3rem; font-weight: bold; margin: 0; }
+        .section-title small { font-size: 0.8rem; font-weight: normal; margin-left: 5px; }
+
+        /* 食材選擇區 */
+        .ingredient-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 30px;
+        }
+
+        .ingredient-card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 15px 5px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            border: 3px solid transparent;
+            user-select: none;
+        }
+
+        .ingredient-card:hover { transform: scale(1.03); background-color: #fff; }
+        .ingredient-card.active {
+            border-color: var(--selected-border);
+            box-shadow: 0 0 15px rgba(139, 90, 43, 0.4);
+            background-color: #ffffff;
+        }
+
+        .icon { font-size: 2.2rem; margin-bottom: 8px; display: block; }
+        .ingredient-card p { margin: 0; font-weight: bold; font-size: 0.95rem; }
+
+        /* 攪拌與顯示區 */
+        .instruction { font-size: 0.85rem; margin-bottom: 10px; }
+        .mixer-layout { display: flex; gap: 15px; align-items: stretch; }
+
+        .display-area {
+            flex: 1;
+            background-color: var(--card-bg);
+            border-radius: 15px;
+            border: 8px solid #a8947a;
+            min-height: 160px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .controls { display: flex; flex-direction: column; gap: 10px; }
+
+        .btn-mix {
+            background-color: var(--accent-color);
+            border: none;
+            padding: 15px 12px;
+            border-radius: 10px;
+            writing-mode: vertical-rl;
+            text-orientation: upright;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            color: var(--primary-text);
+            transition: background 0.2s;
+        }
+
+        .btn-mix:hover { background-color: #f9b88d; }
+
+        .btn-reset {
+            background-color: #fff;
+            border: none;
+            border-radius: 12px;
+            width: 50px;
+            height: 50px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: transform 0.3s;
+        }
+
+        .btn-reset:hover { transform: rotate(-90deg); }
+
+        /* 結果動態樣式 */
+        .res-title { font-weight: bold; font-size: 1.15rem; color: #724a23; margin-bottom: 8px; }
+        .res-body { font-size: 0.9rem; line-height: 1.6; margin: 0; }
+        .placeholder { color: #999; font-style: italic; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>調配你的巧克力</h1>
+    <p class="subtitle">Part VI：互動小遊戲</p>
+    <hr>
+
+    <div class="section-header">
+        <div class="orange-bar"></div>
+        <h2 class="section-title">食材選擇</h2>
+    </div>
+
+    <div class="ingredient-grid">
+        <div class="ingredient-card" data-id="cocoa">
+            <span class="icon">🍫</span><p>可可</p>
+        </div>
+        <div class="ingredient-card" data-id="sugar">
+            <span class="icon">🍬</span><p>糖</p>
+        </div>
+        <div class="ingredient-card" data-id="milk">
+            <span class="icon">🥛</span><p>牛奶</p>
+        </div>
+        <div class="ingredient-card" data-id="chili">
+            <span class="icon">🌶️</span><p>辣椒</p>
+        </div>
+        <div class="ingredient-card" data-id="corn">
+            <span class="icon">🌽</span><p>玉米粉</p>
+        </div>
+        <div class="ingredient-card" data-id="cinnamon">
+            <span class="icon">🌿</span><p>肉桂</p>
+        </div>
+    </div>
+
+    <div class="section-header">
+        <div class="orange-bar"></div>
+        <h2 class="section-title">巧克力攪拌機 <small>你的味道屬於哪個時代？</small></h2>
+    </div>
+    <p class="instruction">拖曳上方食材到攪拌機中，點擊混合，可做出不同時代的巧克力。</p>
+
+    <div class="mixer-layout">
+        <div class="display-area" id="screen">
+            <p class="placeholder">等待混合食材...</p>
+        </div>
+        <div class="controls">
+            <button class="btn-mix" id="mixBtn">混合攪拌</button>
+            <button class="btn-reset" id="resetBtn" title="全部重置">↻</button>
+        </div>
+    </div>
+</div>
+
+<audio id="pickSound" src="pick-92276.mp3" preload="auto"></audio>
+<audio id="mixSound" src="videoplayback.mp3" preload="auto"></audio>
+<audio id="resetSound" src="snowball-throw-hit_3-278173.mp3" preload="auto"></audio>
+
+<script>
+    const cards = document.querySelectorAll('.ingredient-card');
+    const screen = document.getElementById('screen');
+    const mixBtn = document.getElementById('mixBtn');
+    const resetBtn = document.getElementById('resetBtn');
+
+    // 獲取音效元素
+    const pickSound = document.getElementById('pickSound');
+    const mixSound = document.getElementById('mixSound');
+    const resetSound = document.getElementById('resetSound'); // 新增：重置音效
+
+    let selected = new Set();
+
+    // 播放音效的通用函數
+    function playSound(audioElement) {
+        audioElement.currentTime = 0;
+        audioElement.play().catch(e => console.error("音效播放失敗:", e));
+    }
+
+    // 點擊食材切換選取狀態 (並播放點擊音效)
+    cards.forEach(card => {
+        card.addEventListener('click', () => {
+            const id = card.dataset.id;
+            if (selected.has(id)) {
+                selected.delete(id);
+                card.classList.remove('active');
+            } else {
+                selected.add(id);
+                card.classList.add('active');
+            }
+            playSound(pickSound); // 播放點擊音效
+        });
+    });
+
+    // 混合按鈕功能 (播放混合音效)
+    mixBtn.addEventListener('click', () => {
+        playSound(mixSound); // 播放混合音效
+
+        if (selected.size === 0) {
+            screen.innerHTML = '<p style="color:#724a23;">請先選擇食材！</p>';
+            return;
+        }
+
+        const items = Array.from(selected);
+        const has = (id) => items.includes(id);
+        const count = items.length;
+
+        let title = "";
+        let desc = "";
+
+        // 判斷邏輯
+        if (count === 1 && has('cocoa')) {
+            title = "【瑪雅文明時期】";
+            desc = "這被稱為「諸神的食物」。在古瑪雅文明中，可可不只是食物，更是神聖的祭品與貨幣。";
+        }
+        else if (has('cocoa') && ( (count === 3 && has('corn') && has('chili')) || (count === 2 && has('chili')) )) {
+            title = "【阿茲特克皇家配方】";
+            desc = "這是戰士的聖飲！添加辣椒帶來的辛辣感能振奮精神，是阿茲特克人出征前的必備能量飲料。";
+        }
+        else if (has('cocoa') && has('cinnamon') && ( (count === 3 && has('sugar')) || count === 2 )) {
+            title = "【西班牙化配方】";
+            desc = "大航海時期的提神飲料。西班牙人為了適應歐洲口味，去掉了辣椒，改加入肉桂與糖，成為宮廷貴族的珍寵。";
+        }
+        else if (has('cocoa') && ( (count === 2 && (has('sugar') || has('milk'))) || (count === 3 && has('sugar') && has('milk')) )) {
+            title = "【現代巧克力】";
+            desc = "這是我們最熟悉的風味。工業革命後，牛奶與大量的糖讓巧克力變得平易近人且滑順甜美。";
+        }
+        else {
+            title = "【全新的巧克力方案】";
+            desc = "這種配方史無前例！恭喜你配出了歷史上未曾記載的創新滋味，也許你就是下一個巧克力大師。";
+        }
+
+        screen.innerHTML = `<div class="res-title">${title}</div><p class="res-body">${desc}</p>`;
+
+        // 視覺反饋
+        screen.style.backgroundColor = "#fff";
+        setTimeout(() => screen.style.backgroundColor = "var(--card-bg)", 200);
+    });
+
+    // 重置按鈕功能 (播放重置音效)
+    resetBtn.addEventListener('click', () => {
+        playSound(resetSound); // 播放重置音效
+
+        selected.clear();
+        cards.forEach(c => c.classList.remove('active'));
+        screen.innerHTML = '<p class="placeholder">等待混合食材...</p>';
+    });
+</script>
+
+</body>
+</html>
